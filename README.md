@@ -3,20 +3,21 @@
 
 ## Introduction
 
-Tetris is my go-to puzzle to implement whenever I attempt to learn a new language. It has simple rules and can be 
-implemented in <500 LOC for most languages. Choosing the same problem to implement over and again lets me focus 
-on the language first. I can quickly compare it to other solutions, and get an idea of how this language forces 
-(encourages) me to think.
+[Tetris](https://en.wikipedia.org/wiki/Tetris) is my go-to puzzle to implement whenever I attempt to learn a new language. 
+It has simple rules and can be implemented in fewer than 500 LOC for most languages. Choosing the same problem to implement 
+over and again lets me focus on the language first. I can quickly compare it to other solutions, and get an idea of how this 
+language forces (encourages) me to think.
 
 ![Tetris simplified](resources/1_1.png)
 
 ## Audience
 This is written for Software Engineers who have experience in one other popular programming language (think Java, C, 
-Python, JS etc).
+Python, JS etc.).
 
 ## 0. Clojure as a LISP
-Clojure is a List Processor (LISP). To many, Lists are associated with data, not code. Clojure code is structured as 
-a list of lists, each containing the code to be interpreted. This seems a little abstract, so lets look at some code:
+[Clojure](https://clojure.org/) is a List Processor (LISP). To many, Lists are associated with data not code. 
+Clojure code is structured as a list of lists, each containing the code to be interpreted. This seems a little abstract, 
+so lets look at some code:
 
 ```clojure 
 ;; comment
@@ -46,7 +47,7 @@ name to be invoked, and the remaining items are values to be passed to the funct
 (str "1 plus 2 equals " (+ 1 2))
 => "1 plus 2 equals 3"
 ```
-Since  all function calls follow the same pattern, Clojure at its core syntax is easy to understand. 
+Since all function calls follow the same pattern, Clojure's core syntax is easy to understand. 
 
 ## 1. Variable Definition
 We start by defining some global variables
@@ -56,7 +57,7 @@ We start by defining some global variables
 (def board-depth 12)
 ```
 The `def` symbol is a macro. Similar to functions, we call macros in the same way. However, their control structures 
-can be more complex. In this case, we define our Tetris play area ("board") as being an 8x12 grid.
+can be more complex. In this case, we define our Tetris play area ("board") as an 8x12 grid.
 
 Now to define the piece shapes:
 
@@ -92,15 +93,14 @@ Now to define the piece shapes:
 (def pieces
   [l-piece square-piece s-piece l2-piece z-piece line-piece])
 ```
-The boolean `true` defines where a block is "filled", while `false` defines an emplty block.
+The boolean `true` defines where a cell is filled, while `false` defines an empty cell.
 
-We're introduced to some new syntax: `[]` square bracket notation, which defines a Vector. Vectors are one of our 
-core datastructures in Clojure. They allow quick traversal and random access to a "Sequence" of ordered data. For our 
+We've introduced to some new syntax: `[]` square bracket notation which defines a Vector. Vectors are one of our 
+core datastructures in Clojure. They allow quick traversal and random access to a "sequence" of ordered data. For our 
 piece definition above, we use a "vector-of-vectors" or 2D vector.
 
 ## 2. Working with Vectors / Sequences
-So far we've called existing functions made available to us in the core library. Clojure lets us define our own 
-functions:
+Clojure lets us define our own functions:
 
 ```clojure
 (defn width                          ;; function name
@@ -121,9 +121,10 @@ width.
 (width line-piece)
 => 1
 ```
-Clojure does not have the concept of Classes or Class Methods. Functions are global to a particular namespace. It is 
-idiomatic to write Clojure methods which will accept multiple "types" gracefully. For example, `count` will count 
-the elements in a Vector as well as a Set or Map.
+Clojure does not have the concept of Classes or Class Methods. Many functinos in the Clojure core library are 
+flexible enough to handle multiple different data types. For example, 
+[count](https://clojuredocs.org/clojure.core/count) will count the elements in a Vector 
+as well as a Set, Map, String, or even Java Collection.
 
 Lets define some more simple functions:
 
@@ -140,7 +141,7 @@ Lets define some more simple functions:
          (get row n))))
 ```
 
-Here we are introduced to a new control structure (macro) - the `for` loop. It has the following behavior:
+Here we are introduced to a new control structure - the `for` loop. It has the following behavior:
 
 ```clojure
 (for
@@ -148,7 +149,8 @@ Here we are introduced to a new control structure (macro) - the `for` loop. It h
   function-body)
 ```
 
-We supply two items to the `for` macro - a vector containing a variable name to assign each single element as we 
+We supply two items to the [for](https://clojuredocs.org/clojure.core/for)` macro - a vector containing a variable 
+name to assign each single element as we 
 iterate through the sequence, the sequence itself - and then the function body to execute upon each iteration.
 
 Lets describe our `column` function implementation above:
@@ -156,8 +158,8 @@ Lets describe our `column` function implementation above:
 1. Iterate through the 2D array. Assign each "row" item to the variable `row`
 2. For each row, get the nth item in the vector, and "return" that item
 
-Clojure is a functional language, and as such, many of its control structures are more than just expressions - they 
-return results. The `for` macro will return a sequence containing the "result" of each iteration. There is no 
+Clojure is a functional language, and as such, many of its control structures return results. The `for` macro will 
+return a sequence containing the "result" of each iteration. There is no 
 special syntax for returning a result from an iteration - the final value evaluated will be the result.
 
 Here are some simple examples:
@@ -192,32 +194,33 @@ A function can be referred to and passed around as any other variable:
 (double-it 5)
 => 10
 
-(defn do-something-to-the-number-two
+(defn do-something-with-the-number-two
   [f]
   (f 2))
 
-(do-something-to-the-number-two increment)
+(do-something-with-the-number-two inc)
 => 3
 
-(do-something-to-the-number-two double-it)
+(do-something-with-the-number-two double-it)
 => 4
 
 ;; Define an anonymous function inline (lambda)
-(do-something-to-the-number-two (fn [x] (* x 100)))
+(do-something-with-the-number-two (fn [x] (* x 100)))
 => 200
 
 ;; Sugar syntax, where `%` is the function parameter
-(do-something-to-the-number-two #(* % 1000))
+(do-something-with-the-number-two #(* % 1000))
 => 2000
 ```
-The function `do-something-to-the-number-two` accepts a function as an argument. It calls the function, passing in 
+The function `do-something-with-the-number-two` accepts a function as an argument. It calls the function, passing in 
 `2` and returns the result.
 
-We can supply a core function `increment`, a function we've defined in the namespace `double-it`, or even a function 
+We can supply a core function `inc`, a function we've defined in the namespace `double-it`, or even a function 
 defined inline using one of two ways.
 
-Now we go back to our `column` function from earlier. Instead of using `for`, we can use `map` to apply a function 
-on each element of the supplied sequence, and return a result
+Now we go back to our `column` function from earlier. Instead of using `for`, we can use 
+[map](https://clojuredocs.org/clojure.core/map) to apply a function on each element of the supplied sequence, and 
+return a result
 
 ```clojure
 (defn column
@@ -237,7 +240,7 @@ on each element of the supplied sequence, and return a result
 ## 3. Local Variables, Range, Immutability
 ![Rotation](resources/1_2.png)
 
-Lets implement some additional functions:
+Let's implement some additional functions:
 
 ```clojure
 (defn rotate-right
@@ -257,15 +260,15 @@ Lets implement some additional functions:
                      (get-in piece [target-y target-x]))))))))
 ```
 
-We have a few new concepts here. The first is `range`, which is a helpful function to generate a sequence of 
-incrementing numbers:
+We have a few new concepts here. The first is [range](https://clojuredocs.org/clojure.core/range), which is a  
+function to generate a sequence of incrementing numbers:
 
 ```clojure
 (range 5)
 => [0 1 2 3 4]
 ```
 
-This is often used when trying to mimic the behavior of a classic "for-loop" (as opposed to a for-each loop). The 
+This is often used when trying to mimic the behavior of a classic "for-loop" (as opposed to a foreach-loop). The 
 following would be similar:
 
 ```clojure
@@ -277,24 +280,22 @@ for (int i = 0; i < 5; i++){
 }
 ```
 
-Next, we come across the `let` keyword, in order to assign values to local variables. The variable can be referenced 
-anywhere within the scope of the `let` call:
+Next, we come across the [let](https://clojuredocs.org/clojure.core/let) keyword, which assigns values to local 
+variables. The variable can be referenced anywhere within the scope of the `let` call:
 
 ```clojure
 (let [three (+ 1 2)]
-  (println "one... two... " three "..!"))
+  (str "1... 2... " three "...!"))
+=> "1... 2... 3...!"
 
 ;; Multiple variables, referring to the ones before
 (let [one (inc 0)
       two (inc one)]
-  (println one "... " two "...3..!" ))
+  (str one "... " two "... 3...!" ))
+=> "1... 2... 3...!"
 
-;; Multiple variables, referring to the ones before
-(let [one (inc 0)
-      two (inc one)]
-  (println one "... " two "...3..!" ))
 ```
-We should pause here to understand that all data in Clojure is immutable, and operations on those data create new 
+We should pause here to understand that all data in Clojure is immutable, and operations on those data will create new 
 values that are separate from the original. The original remains untouched.
 
 Take a look at this:
@@ -312,8 +313,8 @@ Immutability is a core feature of many functional programming languages. It enab
 safely, especially in a concurrent environment.
 
 Finally, we will write some more utility functions for our Tetris implementation, this time focussing on the play 
-area (the board). For each new function that you're unsure about, I would recommend you look at the Clojure Core library 
-to see how it works:
+area (the board). For each new function that you're unsure about, I would recommend you look at the 
+[Clojure Core library documentation](https://clojuredocs.org/clojure.core) to see how it works:
 
 ```clojure
 ;; More piece functions
@@ -362,19 +363,19 @@ Note - it is idiomatic to use the `?` suffix for function names or variables tha
 `nil` is Clojure's version of the Null Value. `nil` represents no data, empty. `nil` is also "falsey", meaning it 
 will evaluate to false instead of true within a predicate match.
 
-```clojure 
+```clojure
 (get [0 1 2] 10) ;; Retrieve the 10th element in the vector
 => nil
 
-(println "Hello World!") ;; this is an expression, it returns no value
+(println "Hello World!") ;; printing will return no value
 => nil
 
 (true? nil)
 => false
 ```
 
-Clojure has the `if` form that works in similar ways to other languages. Similar to `for`, it actually returns the 
-result of the evaluated expression
+Clojure has the [if](https://clojuredocs.org/clojure.core/if) form that works in similar ways to other languages. 
+Similar to `for`, it actually returns the result of the evaluated expression:
 
 ```clojure
 (if (even? 10)
@@ -391,7 +392,7 @@ result of the evaluated expression
 
 The structure of the `if` contains 3 expressions: the predicate to evaluate, the true-branch and the false-branch. 
 You may be asking "what if I need to put multiple statements within one of the branches?". We can accomplish this 
-with `do`:
+with `do`, which groups multiple forms together and executes them in sequence:
 
 ```clojure
 (if (even? 10)
@@ -403,9 +404,14 @@ with `do`:
 => "It is even"
 ```
 
-The `if` construct acts as an `if-else` in other languages. To get purely the `if` part, we can use `when`:
+The `if` construct acts as an `if-else` in other languages. If we don't care about the else, we can use 
+[when](https://clojuredocs.org/clojure.core/when):
 
 ```clojure
+(when (even? 4)
+  "It is even")
+=> "It is even"
+
 (when (even? 5)
   "It is even")
 => nil
@@ -415,14 +421,16 @@ If the predicate is false, nothing is evaluated and nil is returned.
 
 ## 5. Reduce, Assoc, Destructuring
 
-Clojure offers a `reduce` function which iterates over a sequence in the same way as `map`, but passes through an 
-accumulator. The accumulator is simply the result of the previous iteration. The result of the overall `reduce` 
-function is the result of the final iteration.
+Clojure offers a [reduce](https://clojuredocs.org/clojure.core/reduce) function which iterates over a sequence in the 
+same way as `map`, but passes through an accumulator. The accumulator is simply the result of the previous iteration. 
+The result of the overall `reduce` function is the result of the final iteration.
 
 ```clojure
+;; Takes the result of the previous iteration, and adds the current element. Passes that result to the next iteration
 (reduce + [1 2 3])
 => 6
 
+;; We can pass an initial value, used in the first iteration
 (reduce + 10 [1 2 3])
 => 16
 
@@ -435,7 +443,7 @@ function is the result of the final iteration.
   [3 5 6 7])
 => true
 ```
-Clojure datastructures are immutable. We are given functions to "modify" the contents of existing sequences, but in 
+Clojure datas tructures are immutable. We use functions to "modify" the contents of existing sequences, but in 
 fact a brand new sequence is created with the changes applied:
 
 ```clojure
@@ -448,12 +456,13 @@ fact a brand new sequence is created with the changes applied:
 => [5 7 7]
 ```
 
-The final concept I want to introduce before jumping back to Tetris is destructuring. This is syntax that we can use 
-to retrieve values from inside datastructures:
+The final concept I want to introduce before jumping back to Tetris is [destructuring](https://blog.brunobonacci.
+com/2014/11/16/clojure-complete-guide-to-destructuring/). This is syntax that we can use 
+to retrieve values from inside data structures:
 
 ```clojure
 (let [a [1 2 3]
-      ;; Destructure to retrieve the elements in the vector
+      ;; Destructure to retrieve the elements in the vector. Any items not present (fourth) will be nil
       [first second third fourth] a]
   (str first " " second " " third " " fourth))
 => "1 2 3 nil"
@@ -469,7 +478,7 @@ to retrieve values from inside datastructures:
 
 Phew! That's a lot. Let's put everything together to write a function which takes a board, a piece, and a pair of coordinates, and
 "adds" the piece to the board. I.e. it sets the value of the cells in the board to `true` in the shape of the piece,
-at the location specified. Again, Clojure datastructures are immutable, to the resulting board will be a new copy of
+at the location specified. Again, Clojure data structures are immutable, to the resulting board will be a new copy of
 the existing board, but with the cells filled.
 
 ![Place a piece on the board](resources/1_3.png)
@@ -504,17 +513,17 @@ the existing board, but with the cells filled.
 
 ## 6. Threading Macro
 
-No, this isn't *that* kind of threading (concurrency). This is the super Clojure macro that can make code much more 
+No, this isn't *that* kind of threading (concurrency). This is the Clojure macro that can make code more 
 readable.
 
-Let's take a look at `filter`, which evaluates a predicate against every element of a sequence, and only retains 
-those elements that evaluate true:
+Let's take a look at [filter](https://clojuredocs.org/clojure.core/filter), which evaluates a predicate against 
+every element of a sequence, and only retains those elements that evaluate true:
 
 ```clojure
 (filter even? [1 2 3 4 5])
 => [2 4]
 
-;; The identity function evaluates false for nils
+;; The identity function evaluates false for nil. This has the effect of removing nil values from a sequence
 (filter identity [1 nil nil 2 nil])
 => [1 2]
 ```
@@ -532,8 +541,8 @@ Might look like:
 => 12
 ```
 
-This code is difficult to read and unwieldy to write. The Threading macros `->` and `->>` allow us to write this in 
-a more "sequential" style:
+This code is difficult to read and unwieldy to write. The Threading macros [->](https://clojuredocs.org/clojure.core/-%3E) 
+and [->>](https://clojuredocs.org/clojure.core/-%3E%3E) allow us to write this in a more "sequential" style:
 
 ```clojure
 (->> [1 2 3 4]
@@ -544,7 +553,7 @@ a more "sequential" style:
 ```
 This threading macro takes the first argument `[1 2 3 4]`, and "threads" it into the second form (`filter ...`) as 
 the last element of that form. That form evaluates, and the result is passed as the last element of the next form 
-('map ...'). This goes on until the result drops out the bottom:
+(`map ...`). This goes on until the result drops out the bottom:
 
 ```clojure
 (->> [1 2 3 4] ;;  ->-->-
@@ -628,7 +637,8 @@ Armed with this knowledge, we can write a function that finds the height of all 
 `for`, `map` and `reduce` are great tools for iterating over sequences. They are simple in that - they always 
 iterate over all items, and values are consistently passed into the function body.
 
-For something more complex, we can use `loop` and `recur`:
+For something more complex, we can use [loop](https://clojuredocs.org/clojure.core/loop) and 
+[recur](https://clojuredocs.org/clojure.core/recur)`:
 
 ```clojure
 ;; Injected variables for loop are initialized here
@@ -656,7 +666,7 @@ An example:
 ```
 
 To implement the "clear lines on the board that are filled" logic, we will use this more complex looping structure, 
-since we have to both iterate through the board, AND modify the board in place as we clear the lines, and add blank 
+since we have to both iterate through the board, and modify the board in place as we clear the lines, AND add blank 
 ones back into the board at the top:
 
 ```clojure
@@ -693,11 +703,11 @@ ones back into the board at the top:
 
 ## 8. Maps
 
-Every language worth its salt has a decent (Hash)Map implementation. Clojure goes further, making the humble Map a 
-first-class citizen of the language:
+Every language worth its salt has a decent Map / Associative implementation. Clojure goes further, making the humble 
+Map a first-class citizen of the language:
 
 1. Maps have their own literal syntax: `{}`
-2. Maps are idiomatic - Clojure users are encouraged to use Maps for modelling data (as opposed to the "Class" or  "Struct" in other languages)
+2. Maps are idiomatic - Clojure users are encouraged to use Maps for modelling data (as opposed to the "Class" or "Struct" in other languages)
 3. Core library functions work on Maps perfectly: `get`, `assoc`, `update`, `map`, `filter`, `count` etc.
 
 We cannot talk about Maps without also talking about Keywords. A Keyword is a String with added powers. It is 
@@ -760,7 +770,7 @@ at any one time. The state will contain:
 ```
 
 There is something different about this function definition - it is overloaded. The function defines different 
-implementations depending on the arity (number of arguments) supplied by the caller. So if the user calls 
+implementations depending on the function-arity (number of arguments supplied by the caller). So if the user calls 
 `new-state` function with zero arguments, the function will be called with an empty board, a random piece, and zero 
 score. 
 
@@ -814,6 +824,8 @@ We can now define a new function to move the current piece either left or right,
   [movement-size state]
   (let [current-position (:position state)
         target-position (+ current-position movement-size)
+        ;; The cond macro takes "pairs" of expressions. The first in the pair is evaluated for truthiness.
+        ;; If truthy, the second in the pair is run and returned. Else move to the next clause
         target-position (cond 
                           ;; Valid - use the target position
                           (valid-drop-position? (:piece state) target-position) target-position
@@ -830,7 +842,7 @@ We can now define a new function to move the current piece either left or right,
 (def reset-position (partial -move-state 0))
 ```
 
-We can bring it all together with a function that "drops" the current piece in the current location, onto the board. 
+We can bring it all together with a function that drops the current piece in the current location onto the board. 
 A new piece will then be generated, lines will be cleared, score tallied etc.
 
 ```clojure
@@ -848,13 +860,13 @@ A new piece will then be generated, lines will be cleared, score tallied etc.
         (assoc :board board)
         (assoc :piece (rand-nth pieces))
         (reset-position)
-        (update :score #(+ % lines-cleared))))
+        (update :score #(+ % lines-cleared)))))
 ```
 
 ## 9. Side Effects, Rendering
 
 Clojure is a functional language. Every expression is evaluated for a result. There are some exceptions to this, for 
-example `println` returns no result, and produces a side effect (sending characters to standard out).
+example `println` returns no result, instead producing a side effect (sending characters to standard out).
 
 Clojure tries to be lazy. If the result of an expression is not used (discarded), Clojure may skip its execution 
 entirely. Consider the following case;
@@ -862,9 +874,9 @@ entirely. Consider the following case;
 ```clojure
 (do
   (for [_ (range 5)]
-    (println "Hello")) ;; will not run
+    (println "Hello")) ;; will not run, since we do nothing with the output
 
-  (+ 1 2))
+  (+ 1 2)) ;; this result will be returned
 ```
 Clojure may not execute the `println` function at all, since the result returned by `for` is completely discarded.
 
