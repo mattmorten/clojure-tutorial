@@ -1,10 +1,15 @@
 (ns tetris-clj.core
   "This is part of a tutorial - Clojure for Software Engineers, which can be found at ..."
   (:gen-class)
-  (:require [lanterna.terminal :as t]))
+  (:require [lanterna.terminal :as t]
+            [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as st]
+            [clojure.spec.gen.alpha :as gen]))
 
 (def board-width 8)
 (def board-depth 12)
+
+(s/def ::positive-or-zero (s/and integer? #(>= % 0)))
 
 ;;
 ;; Piece definitions. `true` indicates filled square
@@ -37,9 +42,11 @@
    [true]
    [true]])
 
-(def pieces
-  [l-piece square-piece s-piece l2-piece z-piece line-piece])
-
+(defn empty-piece
+  [size-x size-y]
+  (vec (for [_ (range size-y)]
+         (vec (for [_ (range size-x)]
+                false)))))
 
 (defn width
   "Retrieve the width of a piece"
@@ -51,6 +58,61 @@
   [piece]
   (count piece))
 
+(defn column
+  "Retrieve a single column from a piece or board definition"
+  [piece-or-board x]
+  (vec (for [row piece-or-board]
+         (get row x))))
+
+(defn columns
+  "Transforms a row or piece into column format (as opposed to row-format)"
+  [piece-or-board]
+  (for [x (range (width piece-or-board))]
+    (column piece-or-board x)))
+
+(defn no-empty-rows?
+  "Do all rows have at least one filled cell?"
+  [piece]
+  (every? #(some true? %) piece))
+
+(def no-empty-columns?
+  (comp no-empty-rows? columns))
+
+(defn all-rows-same-length?
+  [piece]
+  (let [width (width piece)]
+    (every? #(= width (count %)) piece)))
+
+
+(s/def ::piece-size #{1 2 3 4})
+(s/def ::piece-row (s/coll-of boolean? :min-count 1 :max-count 4))
+(s/def ::piece
+  (s/with-gen
+    ;; Spec
+    (s/and (s/coll-of ::piece-row :min-count 1 :max-count 4)
+           no-empty-rows?
+           no-empty-columns?
+           all-rows-same-length?)
+    ;; Generator
+    #(gen/fmap (fn [[rows cols]]
+                 ;; Create a completely empty piece
+                 (let [piece (empty-piece cols rows)]
+                   ;; Keep looping - fill a cell at random, then check for our constraints
+                   ;; Once all rows and columns are filled, exit
+                   (loop [piece piece]
+                     (let [row (rand-int rows)
+                           col (rand-int cols)
+                           piece (assoc-in piece [row col] true)]
+                       (if (and (no-empty-rows? piece)
+                                (no-empty-columns? piece))
+                         piece
+                         (recur piece))))))
+               (gen/tuple (s/gen ::piece-size) (s/gen ::piece-size)))))
+
+
+(def pieces
+  [l-piece square-piece s-piece l2-piece z-piece line-piece])
+
 (defn piece-coordinates
   "Produces a sequence of coordinates for each square in a piece"
   [piece]
@@ -58,11 +120,6 @@
         x (range (width piece))]
     [x y]))
 
-(defn column
-  "Retrieve a single column from a piece or board definition"
-  [piece-or-board x]
-  (vec (for [row piece-or-board]
-         (get row x))))
 
 
 (defn rotate-right
@@ -76,7 +133,7 @@
                         target-x y]
                      (get-in piece [target-y target-x]))))))))
 
-
+(s/fdef rotate-right :args (s/cat :piece ::piece) :ret ::piece)
 
 (def empty-row
   "Create a new row and fill it with `false` values"
@@ -204,6 +261,28 @@
   ([]
    (new-state empty-board (rand-nth pieces) 0)))
 
+(defn valid-state?
+  [state]
+  (valid-drop-position? (:piece state) (:position state)))
+
+(s/def ::board-row (s/coll-of boolean? :count board-width))
+(s/def ::board (s/coll-of ::board-row :count board-depth))
+
+(s/def ::position (set (range board-width)))
+(s/def ::score ::positive-or-zero)
+(s/def ::state (s/and (s/keys :req-un [::board ::piece ::position ::score])
+                      valid-state?))
+
+(s/def ::unfinished-game-state
+  (s/with-gen
+    ;; Spec
+    (s/and ::state
+           #(every? false? (-> % :board first)))
+    ;; Generator
+    #(gen/fmap (fn [generated-value]
+                 (assoc-in generated-value [:board 0] empty-row))
+               (s/gen ::state))))
+
 (defn rotate-state
   "Update the game state by rotating the current piece 90 degrees"
   [state]
@@ -212,6 +291,7 @@
       (assoc state :position (rightmost-drop-position (:piece state)))
       state)))
 
+(s/fdef rotate-state :args (s/cat :state ::state) :ret ::state)
 
 (defn -move-state
   "Update the game state by moving the current piece left of right"
@@ -227,6 +307,8 @@
                           :else (rightmost-drop-position (:piece state)))]
 
     (assoc state :position target-position)))
+
+(s/fdef -move-state :args (s/cat :size integer? :state ::state) :ret ::state)
 
 (def move-left (partial -move-state -1))
 (def move-right (partial -move-state 1))
@@ -246,7 +328,29 @@
         (reset-position)
         (update :score #(+ % lines-cleared)))))
 
+(s/fdef drop-state :args (s/cat :state ::state) :ret ::state)
 
+(def actions #{:left :right :rotate :drop})
+(s/def ::action actions)
+
+(defn do-action
+  [state action]
+  (try
+    (-> action
+        (case
+          :left (move-left state)
+          :right (move-right state)
+          :rotate (rotate-state state)
+          :drop (drop-state state)))
+        ;(assoc :score -1))
+    (catch Exception e
+      (do (printf "Could not do action %s on %s" action state)
+          (.printStackTrace e)))))
+
+
+(s/fdef do-action
+        :args (s/cat :state ::unfinished-game-state :action ::action)
+        :ret ::state)
 ;;
 ;; Rendering
 ;;

@@ -1,7 +1,8 @@
 (ns tetris-clj.core-test
   (:require [clojure.test :refer :all]
-            [tetris-clj.core :refer :all]))
+            [tetris-clj.core :refer :all]
+            [clojure.spec.alpha :as s]))
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+(deftest generative-test
+  (s/exercise-fn `do-action 100))
+
