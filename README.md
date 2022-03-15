@@ -34,7 +34,7 @@ It has simple rules and can be implemented in fewer than 500 LOC for most langua
 over and again lets me focus on the language first. I can quickly compare it to other solutions, and get an idea of how this 
 language forces (encourages) me to think.
 
-![Tetris simplified](./resources/1_1.png)
+![Tetris simplified](./doc/resources/1_1.png)
 
 ## Contents
 
